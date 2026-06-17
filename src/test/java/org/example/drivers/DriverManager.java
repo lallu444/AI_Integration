@@ -30,6 +30,8 @@ public class DriverManager {
 //                    ltOptions.put("username", "lallubanala444");
 //                    ltOptions.put("accessKey", "LT_pxmul8RDoUpbZttNPHw2Xfc4hCG6mZEztlnpO4P81nqLcIz");
                     ltOptions.put("project", "AI Automation Sample Project");
+                    ltOptions.put("build", "AI Automation Sample Build");
+                    ltOptions.put("name", "AI Automation Sample Test");
                     ltOptions.put("selenium_version", "4.0.0");
                     ltOptions.put("w3c", true);
                     browserOptions.setCapability("LT:Options", ltOptions);
