@@ -1,0 +1,30 @@
+﻿# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+# Build
+target/
+*.class
+*.jar
+*.war
+*.ear
+# Logs
+logs/
+*.log
+# Reports
+cucumber-reports/
+allure-results/
+allure-report/
+# OS
+.DS_Store
+Thumbs.db
+# Maven
+.m2/
+dependency-reduced-pom.xml
+# Environment
+.env
+.env.local
+# Test Results
+surefire-reports/
