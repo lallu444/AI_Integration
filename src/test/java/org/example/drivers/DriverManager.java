@@ -14,8 +14,10 @@ import java.util.HashMap;
 
 public class DriverManager {
     private static ThreadLocal<WebDriver> driver = new ThreadLocal<>();
-    public static final String USERNAME = "lallubanala444";
-    public static final String ACCESS_KEY = "LT_pxmul8RDoUpbZttNPHw2Xfc4hCG6mZEztlnpO4P81nqLcIz";
+
+    // Reads environment variables from GitHub Actions, defaults to hardcoded strings if local
+    public static final String USERNAME = System.getenv("LT_USERNAME") != null ? System.getenv("LT_USERNAME") : "lallubanala444";
+    public static final String ACCESS_KEY = System.getenv("LT_ACCESS_KEY") != null ? System.getenv("LT_ACCESS_KEY") : "LT_pxmul8RDoUpbZttNPHw2Xfc4hCG6mZEztlnpO4P81nqLcIz";
     public static final String URL = "https://" + USERNAME + ":" + ACCESS_KEY + "@hub.lambdatest.com/wd/hub";
 
     public static void initializeDriver(String browserType) throws MalformedURLException {
@@ -27,8 +29,6 @@ public class DriverManager {
                     browserOptions.setPlatformName("Windows 10");
                     browserOptions.setBrowserVersion("dev");
                     HashMap<String, Object> ltOptions = new HashMap<String, Object>();
-//                    ltOptions.put("username", "lallubanala444");
-//                    ltOptions.put("accessKey", "LT_pxmul8RDoUpbZttNPHw2Xfc4hCG6mZEztlnpO4P81nqLcIz");
                     ltOptions.put("project", "AI Automation Sample Project");
                     ltOptions.put("build", "AI Automation Sample Build");
                     ltOptions.put("name", "AI Automation Sample Test");
@@ -37,16 +37,9 @@ public class DriverManager {
                     browserOptions.setCapability("LT:Options", ltOptions);
                     driver.set(new RemoteWebDriver(new URL(URL),browserOptions));
                     break;
-                /*case "firefox":
-                    driver.set(LambdaTestDriver.getFirefoxDriver());
-                    break;
-                case "edge":
-                    driver.set(LambdaTestDriver.getEdgeDriver());
-                    break;*/
                 default:
                     driver.set(new ChromeDriver());
             }
-
         }else{
             switch (browserType.toLowerCase()) {
                 case "chrome":
