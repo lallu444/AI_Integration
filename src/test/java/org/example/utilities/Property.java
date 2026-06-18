@@ -18,14 +18,16 @@ public class Property {
 
         try (FileInputStream fis = new FileInputStream(filePath)) {
             props.load(fis);
-            platform = props.getProperty("Platform");
-            browser = props.getProperty("Browser");
-            Role = props.getProperty("Role");
-            Experince = props.getProperty("Experince");
-            Mail = props.getProperty("Mail");
-            Location = props.getProperty("Location");
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load config file.", e);
+            System.out.println("Warning: ConfigProperties.properties file not found. Relying strictly on command-line arguments.");
         }
+
+        // Check command-line system property (-D) first. If null, fall back to file property.
+        platform = System.getProperty("Platform", props.getProperty("Platform"));
+        browser = System.getProperty("Browser", props.getProperty("Browser"));
+        Role = System.getProperty("Role", props.getProperty("Role"));
+        Experince = System.getProperty("Experince", props.getProperty("Experince"));
+        Mail = System.getProperty("Mail", props.getProperty("Mail"));
+        Location = System.getProperty("Location", props.getProperty("Location"));
     }
 }
