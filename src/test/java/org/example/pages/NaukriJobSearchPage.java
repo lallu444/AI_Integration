@@ -1,5 +1,6 @@
 package org.example.pages;
 
+import org.example.utilities.Property;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -7,6 +8,9 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.example.utilities.DataStorageUtility;
 import org.example.utilities.TableFormatterUtility;
 import org.example.utilities.EmailUtility;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.PageFactory;
+import org.testng.Assert;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,12 +34,27 @@ public class NaukriJobSearchPage extends BasePage {
     private By sortByDateButton = By.xpath("//div[contains(@class,'sort')]//span[contains(text(), 'Date')]");
     private By FreshnessList = By.xpath("//ul[@data-filter-id='freshness']");
 
+    @FindBy(xpath = "//a[@title='Jobseeker Login']") public WebElement loginBtn;
+    @FindBy(xpath = "//label[@class='label']//following-sibling::input[@type='text']") public WebElement EmailInput;
+    @FindBy(xpath = "//label[@class='label']//following-sibling::input[@type='password']") public WebElement PassowrdInput;
+    @FindBy(xpath = "//div[contains(@class,'crossIcon')]") public WebElement chatBotDialog;
+    @FindBy(xpath = "//img[@alt='naukri user profile img']") public WebElement ProfileImg;
+    @FindBy(xpath = "//button[contains(@class,'btn-primary loginButton')]") public WebElement loginSubmitBtn;
+    @FindBy(xpath = "//div[@class='view-profile-wrapper']/a") public WebElement viewProfileBtn;
+    @FindBy(xpath = "//div[@class='profilePage']") public WebElement profilePage;
+    @FindBy(xpath = "//span[text()='Resume headline']//following-sibling::span") public WebElement resumeHeadlineEdit;
+    @FindBy(xpath = "//form[@name='resumeHeadlineForm']") public WebElement resumeHeadlinePopup;
+    @FindBy(xpath = "//form//button[text()='Save']") public WebElement resumeHeadlineSaveBtn;
+    @FindBy(xpath = "//span[@class='typ-14Medium mod-date-val']") public WebElement updateConfirmation;
+
     public NaukriJobSearchPage(WebDriver driver) {
         super(driver);
+        PageFactory.initElements(driver, this);
     }
 
     public void navigateToNaukri() {
         driver.navigate().to("https://www.naukri.com/");
+        driver.manage().window().maximize();
     }
 
     public void searchSkills(String skill) {
@@ -318,5 +337,46 @@ public class NaukriJobSearchPage extends BasePage {
     // JavaScript click helper
     private void clickJavascript(WebElement element) {
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+    }
+
+    public void loginToSite(String UserName,String Password){
+        waitForElementToBeClickable(loginBtn);
+        click(loginBtn);
+        waitForElementToBeClickable(EmailInput);
+        sendKeys(EmailInput, UserName);
+        waitForElementToBeClickable(PassowrdInput);
+        sendKeys(PassowrdInput, Password);
+        click(loginSubmitBtn);
+        try {
+            waitForElementToBeVisible(chatBotDialog,5);
+            if(chatBotDialog.isDisplayed()){
+                click(chatBotDialog);
+            }
+            System.out.println("Closed the Chat Bot dialog");
+        } catch (Exception e) {
+            System.out.println("There is no chat bot dialog");
+        }
+        try{
+            waitForElementToBeVisible(ProfileImg,20);
+            if(ProfileImg.isDisplayed()){
+                System.out.println("User logged in successfully!");
+            }
+        } catch (Exception e){
+            System.out.println("There is no user logged in! "+e);
+            Assert.fail("There is no user logged in!");
+        }
+    }
+
+    public void updateProfile(){
+        click(viewProfileBtn);
+        waitForElementToBeVisible(profilePage);
+        waitForElementToBeVisible(resumeHeadlineEdit,10);
+        scrollToElement(resumeHeadlineEdit);
+        clickjavascript(resumeHeadlineEdit);
+        waitForElementToBeVisible(resumeHeadlinePopup);
+        click(resumeHeadlineSaveBtn);
+        waitForElementToBeVisible(updateConfirmation);
+        scrollToElement(updateConfirmation);
+        Assert.assertEquals(updateConfirmation.getText(),"Today","Profile Updated As Expected");
     }
 }

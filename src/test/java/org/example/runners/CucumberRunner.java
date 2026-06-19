@@ -1,17 +1,19 @@
 package org.example.runners;
+
 import io.cucumber.testng.AbstractTestNGCucumberTests;
 import io.cucumber.testng.*;
 
 @CucumberOptions(
-    features = "src/test/resources/features",
-    tags= "@MailReportPropertyReader",
-    glue = {"org.example.stepDefinitions", "org.example.hooks"},
-    plugin = {
-        "pretty",
-        "html:target/cucumber-reports/cucumber.html",
-        "json:target/cucumber-reports/cucumber.json"
-    },
-    monochrome = true
+        features = "src/test/resources/features",
+        tags = "@updateNaukri",
+        glue = {"org.example.stepDefinitions", "org.example.hooks"},
+        dryRun = false,
+        plugin = {
+                "pretty",
+                "html:target/cucumber-reports/cucumber.html",
+                "json:target/cucumber-reports/cucumber.json"
+        },
+        monochrome = true
 )
 public class CucumberRunner extends AbstractTestNGCucumberTests {
     // Test runner for Cucumber scenarios

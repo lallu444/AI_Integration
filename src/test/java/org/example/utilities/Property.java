@@ -11,6 +11,7 @@ public class Property {
     public static String Experince;
     public static String Mail;
     public static String Location;
+    public static String password;
 
     static {
         Properties props = new Properties();
@@ -29,5 +30,6 @@ public class Property {
         Experince = System.getProperty("Experince", props.getProperty("Experince"));
         Mail = System.getProperty("Mail", props.getProperty("Mail"));
         Location = System.getProperty("Location", props.getProperty("Location"));
+        password = System.getProperty("password", props.getProperty("password"));
     }
 }

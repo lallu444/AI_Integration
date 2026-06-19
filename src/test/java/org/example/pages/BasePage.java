@@ -17,19 +17,30 @@ public class BasePage {
         return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
     protected WebElement waitForElementToBeVisible(WebElement locator) {
-        return wait.until(ExpectedConditions.visibilityOfElementLocated((By) locator));
+        return wait.until(ExpectedConditions.visibilityOf(locator));
+    }
+    protected WebElement waitForElementToBeVisible(WebElement locator,long timeout) {
+        WebDriverWait wait1 = new WebDriverWait(driver, Duration.ofSeconds(timeout));
+        return wait1.until(ExpectedConditions.visibilityOf(locator));
     }
     protected WebElement waitForElementToBeClickable(By locator) {
+        return wait.until(ExpectedConditions.elementToBeClickable(locator));
+    }
+    protected WebElement waitForElementToBeClickable(WebElement locator) {
         return wait.until(ExpectedConditions.elementToBeClickable(locator));
     }
     protected void click(By locator) {
         waitForElementToBeClickable(locator).click();
     }
     protected void click(WebElement locator) {
+        waitForElementToBeVisible(locator);
         locator.click();
     }
     protected void sendKeys(By locator, String text) {
         waitForElementToBeVisible(locator).sendKeys(text);
+    }
+    protected void sendKeys(WebElement locator, String text) {
+        locator.sendKeys(text);
     }
     protected String getText(By locator) {
         return waitForElementToBeVisible(locator).getText();

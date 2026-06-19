@@ -1,4 +1,6 @@
 package org.example.stepDefinitions;
+import io.cucumber.java.PendingException;
+import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
 import io.cucumber.java.en.Then;
@@ -76,5 +78,14 @@ public class NaukriJobSearchSteps {
     public void readFromConfigFile(String reader) {
         String prop= Property.platform;
         System.out.println("This is the property: "+prop);
+    }
+    @Then("update the bio")
+    public void update_the_bio() {
+        naukriPage.updateProfile();
+    }
+
+    @And("login to site using {string} and {string}")
+    public void loginToSite(String UserName,String Password) {
+        naukriPage.loginToSite(UserName,Password);
     }
 }
