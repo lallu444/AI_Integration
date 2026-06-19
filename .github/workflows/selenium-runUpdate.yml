@@ -1,9 +1,9 @@
-name: LambdaTest Selenium Runner
+name: Naukri Update Everyday
 
 on:
   schedule:
     # Triggers the workflow every 5 minutes (subject to GitHub Action queue delays)
-    - cron: '*/5 * * * *'
+    - cron: '30 5 * * *'
   workflow_dispatch: # Allows you to manually trigger it anytime via the Actions UI
 
 jobs:
