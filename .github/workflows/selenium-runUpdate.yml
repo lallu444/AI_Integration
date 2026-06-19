@@ -31,4 +31,5 @@ jobs:
             -DMail="lallubanala444@gmail.com" \
             -DRole="QA analyst" \
             -DExperince="5 years" \
-            -DLocation="Hyderabad"
+            -DLocation="Hyderabad" \
+            -Dcucumber.filter.tags="@updateNaukri"
