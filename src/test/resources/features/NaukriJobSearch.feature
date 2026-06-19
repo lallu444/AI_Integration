@@ -30,5 +30,5 @@
     Then update the bio
     Examples:
       | mail                     | password   |
-      | lallubanala444@gmail.com | lallu@444  |
-      | keerthanak1710@gmai.com  | Kittu1717! |
+      | lallubanala444@gmail.com | Lallu@444  |
+      | keerthanak1710@gmail.com  | Kittu1717! |
