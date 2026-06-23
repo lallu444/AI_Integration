@@ -26,7 +26,7 @@ jobs:
           LT_ACCESS_KEY: ${{ secrets.LT_ACCESS_KEY }}
         run: |
           mvn test \
-            -DPlatform="LambdaTest" \
+            -DPlatform="Desktop" \
             -DBrowser="chrome" \
             -DMail="qa-jobalerts-naukri@googlegroups.com" \
             -DRole="QA analyst" \
