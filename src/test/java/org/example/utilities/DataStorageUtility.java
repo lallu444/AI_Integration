@@ -1,108 +1,185 @@
 package org.example.utilities;
+
 import java.io.*;
 import java.nio.file.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.security.MessageDigest;
 import java.util.*;
+
 public class DataStorageUtility {
-    private static final String DATA_DIR = "src/test/resources/job_data";
-    private static final String DATA_FILE_PREFIX = "jobs_";
-    private static final String DATA_FILE_SUFFIX = ".csv";
-    static {
-        try {
-            Files.createDirectories(Paths.get(DATA_DIR));
+
+    // Single CSV file — always same name, always overwritten
+    private static final String CSV_FILE = "jobs_output.csv";
+    private static final String HASH_FILE = "jobs_hash.txt";
+
+    // Save job data — OVERWRITES previous CSV every time
+    public static void saveJobData(List<Map<String, String>> jobs) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(CSV_FILE, false))) { // false = overwrite
+            // Write header
+            writer.println("Title,Company,Posted,Link");
+
+            // Write each job
+            for (Map<String, String> job : jobs) {
+                writer.printf("\"%s\",\"%s\",\"%s\",\"%s\"%n",
+                        escapeCsv(job.getOrDefault("title", "")),
+                        escapeCsv(job.getOrDefault("company", "")),
+                        escapeCsv(job.getOrDefault("posted", "")),
+                        escapeCsv(job.getOrDefault("link", ""))
+                );
+            }
+            System.out.println("✓ CSV saved/overwritten: " + CSV_FILE);
         } catch (IOException e) {
-            System.out.println("Error creating data directory: " + e.getMessage());
+            System.out.println("Error saving CSV: " + e.getMessage());
         }
     }
-    // Save job listings to file
-    public static String saveJobData(List<Map<String, String>> jobsList) {
-        try {
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-            String filename = DATA_FILE_PREFIX + timestamp + DATA_FILE_SUFFIX;
-            Path filepath = Paths.get(DATA_DIR, filename);
-            StringBuilder csv = new StringBuilder();
-            csv.append("Job Title,Company,Posted Date,Apply Link\n");
-            for (Map<String, String> job : jobsList) {
-                csv.append(job.getOrDefault("title", "")).append(",");
-                csv.append(job.getOrDefault("company", "")).append(",");
-                csv.append(job.getOrDefault("posted", "")).append(",");
-                csv.append(job.getOrDefault("link", "")).append("\n");
-            }
-            Files.write(filepath, csv.toString().getBytes());
-            System.out.println("Job data saved to: " + filepath);
-            return filepath.toString();
-        } catch (IOException e) {
-            System.out.println("Error saving job data: " + e.getMessage());
-            return null;
-        }
+
+    // Compare current jobs with previous run using hash
+    public static Map<String, Object> compareJobData(List<Map<String, String>> currentJobs) {
+        Map<String, Object> result = new HashMap<>();
+
+        String currentHash = generateHash(currentJobs);
+        String previousHash = readPreviousHash();
+
+        boolean isSameData = currentHash.equals(previousHash);
+        boolean isNewData  = !isSameData;
+
+        // Find truly new jobs (not in previous CSV)
+        List<Map<String, String>> previousJobs = readPreviousCsvJobs();
+        List<Map<String, String>> newJobs = findNewJobs(currentJobs, previousJobs);
+
+        // Save current hash for next run comparison
+        savePreviousHash(currentHash);
+
+        result.put("isNewData",     isNewData);
+        result.put("isSameData",    isSameData);
+        result.put("newJobs",       newJobs);
+        result.put("currentJobs",   currentJobs);
+        result.put("previousJobs",  previousJobs);
+        result.put("newJobsCount",  newJobs.size());
+        result.put("totalCount",    currentJobs.size());
+
+        System.out.println("Data comparison — Same as last run: " + isSameData +
+                " | New jobs found: " + newJobs.size());
+        return result;
     }
-    // Get latest job data file
-    public static String getLatestJobDataFile() {
+
+    // Check if current data is identical to previous run
+    public static boolean isSameAsLastRun(List<Map<String, String>> currentJobs) {
+        String currentHash  = generateHash(currentJobs);
+        String previousHash = readPreviousHash();
+        return currentHash.equals(previousHash);
+    }
+
+    // ─── Private Helpers ────────────────────────────────────────────────────
+
+    // Generate a stable hash from job list for comparison
+    private static String generateHash(List<Map<String, String>> jobs) {
         try {
-            File dir = new File(DATA_DIR);
-            File[] files = dir.listFiles((d, name) -> name.startsWith(DATA_FILE_PREFIX) && name.endsWith(DATA_FILE_SUFFIX));
-            if (files == null || files.length == 0) {
-                return null;
+            StringBuilder sb = new StringBuilder();
+            for (Map<String, String> job : jobs) {
+                // Sort keys so order doesn't affect hash
+                TreeMap<String, String> sorted = new TreeMap<>(job);
+                sb.append(sorted.toString());
             }
-            Arrays.sort(files, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
-            return files[0].getAbsolutePath();
+            MessageDigest md  = MessageDigest.getInstance("MD5");
+            byte[] hashBytes  = md.digest(sb.toString().getBytes());
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hashBytes) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.toString();
         } catch (Exception e) {
-            System.out.println("Error getting latest job data file: " + e.getMessage());
-            return null;
+            return String.valueOf(jobs.hashCode());
         }
     }
-    // Load job data from file
-    public static List<Map<String, String>> loadJobData(String filepath) {
-        List<Map<String, String>> jobs = new ArrayList<>();
+
+    // Read hash saved from previous run
+    private static String readPreviousHash() {
         try {
-            List<String> lines = Files.readAllLines(Paths.get(filepath));
-            for (int i = 1; i < lines.size(); i++) {
-                String line = lines.get(i);
-                if (line.trim().isEmpty()) continue;
-                String[] parts = line.split(",", -1);
-                Map<String, String> job = new HashMap<>();
-                job.put("title", parts.length > 0 ? parts[0] : "");
-                job.put("company", parts.length > 1 ? parts[1] : "");
-                job.put("posted", parts.length > 2 ? parts[2] : "");
-                job.put("link", parts.length > 3 ? parts[3] : "");
-                jobs.add(job);
+            File f = new File(HASH_FILE);
+            if (!f.exists()) return "";
+            return new String(Files.readAllBytes(f.toPath())).trim();
+        } catch (IOException e) {
+            return "";
+        }
+    }
+
+    // Save current hash for next run to compare against
+    private static void savePreviousHash(String hash) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(HASH_FILE, false))) {
+            writer.print(hash);
+        } catch (IOException e) {
+            System.out.println("Error saving hash: " + e.getMessage());
+        }
+    }
+
+    // Read jobs from the existing CSV (previous run's data)
+    private static List<Map<String, String>> readPreviousCsvJobs() {
+        List<Map<String, String>> jobs = new ArrayList<>();
+        File f = new File(CSV_FILE);
+        if (!f.exists()) return jobs;
+        try (BufferedReader reader = new BufferedReader(new FileReader(f))) {
+            String line;
+            boolean firstLine = true;
+            while ((line = reader.readLine()) != null) {
+                if (firstLine) { firstLine = false; continue; } // skip header
+                String[] parts = parseCsvLine(line);
+                if (parts.length >= 4) {
+                    Map<String, String> job = new HashMap<>();
+                    job.put("title",   parts[0].replace("\"", "").trim());
+                    job.put("company", parts[1].replace("\"", "").trim());
+                    job.put("posted",  parts[2].replace("\"", "").trim());
+                    job.put("link",    parts[3].replace("\"", "").trim());
+                    jobs.add(job);
+                }
             }
         } catch (IOException e) {
-            System.out.println("Error loading job data: " + e.getMessage());
+            System.out.println("Error reading previous CSV: " + e.getMessage());
         }
         return jobs;
     }
-    // Compare current data with previous data
-    public static Map<String, Object> compareJobData(List<Map<String, String>> currentJobs) {
-        Map<String, Object> result = new HashMap<>();
-        String previousFile = getLatestJobDataFile();
-        List<Map<String, String>> previousJobs = new ArrayList<>();
-        if (previousFile != null) {
-            previousJobs = loadJobData(previousFile);
-        }
-        List<Map<String, String>> newJobs = findNewJobs(currentJobs, previousJobs);
-        result.put("currentJobs", currentJobs);
-        result.put("previousJobs", previousJobs);
-        result.put("newJobs", newJobs);
-        result.put("isNewData", newJobs.size() > 0);
-        result.put("totalCurrent", currentJobs.size());
-        result.put("totalPrevious", previousJobs.size());
-        result.put("totalNew", newJobs.size());
-        return result;
-    }
-    // Find new jobs by comparing links
-    private static List<Map<String, String>> findNewJobs(List<Map<String, String>> current, List<Map<String, String>> previous) {
-        List<Map<String, String>> newJobs = new ArrayList<>();
+
+    // Find jobs in current list that weren't in previous list (by link)
+    private static List<Map<String, String>> findNewJobs(
+            List<Map<String, String>> current,
+            List<Map<String, String>> previous) {
+
         Set<String> previousLinks = new HashSet<>();
         for (Map<String, String> job : previous) {
-            previousLinks.add(job.get("link"));
+            String link = job.getOrDefault("link", "");
+            if (!link.isEmpty()) previousLinks.add(link);
         }
+        List<Map<String, String>> newJobs = new ArrayList<>();
         for (Map<String, String> job : current) {
-            if (!previousLinks.contains(job.get("link"))) {
+            String link = job.getOrDefault("link", "");
+            if (!previousLinks.contains(link)) {
                 newJobs.add(job);
             }
         }
         return newJobs;
+    }
+
+    // Escape special characters for CSV
+    private static String escapeCsv(String value) {
+        if (value == null) return "";
+        return value.replace("\"", "\"\"");
+    }
+
+    // Simple CSV line parser (handles quoted fields)
+    private static String[] parseCsvLine(String line) {
+        List<String> result = new ArrayList<>();
+        boolean inQuotes = false;
+        StringBuilder current = new StringBuilder();
+        for (char c : line.toCharArray()) {
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
+                result.add(current.toString());
+                current = new StringBuilder();
+            } else {
+                current.append(c);
+            }
+        }
+        result.add(current.toString());
+        return result.toArray(new String[0]);
     }
 }

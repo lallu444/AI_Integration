@@ -6,18 +6,23 @@ import io.cucumber.java.en.When;
 import io.cucumber.java.en.Then;
 import org.example.drivers.DriverManager;
 import org.example.pages.NaukriJobSearchPage;
+import org.example.pages.NaukriJobSearchPageAPI;
 import org.openqa.selenium.WebDriver;
+
+import java.io.IOException;
 import java.util.List;
 import org.example.utilities.Property;
 
 public class NaukriJobSearchSteps {
     private WebDriver driver;
     private NaukriJobSearchPage naukriPage;
+    private NaukriJobSearchPageAPI naukriApiPage;
 
     public NaukriJobSearchSteps() {
         this.driver = DriverManager.getDriver();
         Property property = new Property();
         this.naukriPage = new NaukriJobSearchPage(driver);
+        this.naukriApiPage = new NaukriJobSearchPageAPI(driver);
     }
     @Given("User navigates to Naukri website")
     public void userNavigatesToNaukriWebsite() {
@@ -27,7 +32,7 @@ public class NaukriJobSearchSteps {
         System.out.println("User navigated to Naukri website");
     }
     @When("User searches for skill {string}")
-    public void userSearchesForSkill(String skill) {
+    public void userSearchesForSkill(String skill) throws IOException {
         naukriPage.searchSkills(skill);
         System.out.println("User entered skill: " + skill);
     }
@@ -37,7 +42,7 @@ public class NaukriJobSearchSteps {
         System.out.println("User selected experience: " + experience);
     }
     @When("User enters location {string}")
-    public void userEntersLocation(String location) {
+    public void userEntersLocation(String location) throws IOException {
         naukriPage.enterLocation(location);
         System.out.println("User entered location: " + location);
     }
@@ -66,6 +71,11 @@ public class NaukriJobSearchSteps {
     @Given("navigate to naukri and search jobs")
     public void navigateToNaukriAndSearchJobs() {
         naukriPage.executeCompleteWorkflow(Property.Role, Property.Experince, Property.Location,Property.Mail);
+    }
+
+    @Given("navigate to naukri and search jobs from API")
+    public void navigateToNaukriAndSearchJobsFromAPI() {
+        naukriApiPage.executeCompleteWorkflow(Property.Role, Property.Experince, Property.Location,Property.Mail);
     }
 
     @Then("print the properties to console")

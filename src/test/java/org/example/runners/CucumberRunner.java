@@ -5,7 +5,7 @@ import io.cucumber.testng.*;
 
 @CucumberOptions(
         features = "src/test/resources/features",
-        tags = "@updateNaukri",
+        tags = "@MailReportPropertyReaderAPI",
         glue = {"org.example.stepDefinitions", "org.example.hooks"},
         dryRun = false,
         plugin = {
