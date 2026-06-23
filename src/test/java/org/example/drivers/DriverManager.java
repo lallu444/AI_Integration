@@ -71,7 +71,20 @@ public class DriverManager {
             switch (browserType.toLowerCase()) {
                 case "chrome":
                     WebDriverManager.chromedriver().setup();
-                    driver.set(new ChromeDriver());
+                    ChromeOptions options = new ChromeOptions();
+                    options.addArguments("--headless=new");
+                    // 2. Overwrite the default Headless User-Agent with a standard desktop one
+                    options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
+                    options.addArguments("--window-size=1920,1080");
+                    options.addArguments("--start-maximized");
+                    // 4. Hide automation flags and infobars
+                    options.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
+                    options.setExperimentalOption("useAutomationExtension", false);
+
+                    // 5. Additional stability configurations
+                    options.addArguments("--disable-blink-features=AutomationControlled");
+                    options.addArguments("--incognito");
+                    driver.set(new ChromeDriver(options));
                     break;
                 case "firefox":
                     WebDriverManager.firefoxdriver().setup();

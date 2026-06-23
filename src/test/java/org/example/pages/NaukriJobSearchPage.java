@@ -10,8 +10,11 @@ import org.example.utilities.TableFormatterUtility;
 import org.example.utilities.EmailUtility;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -57,7 +60,7 @@ public class NaukriJobSearchPage extends BasePage {
         driver.manage().window().maximize();
     }
 
-    public void searchSkills(String skill) {
+    public void searchSkills(String skill) throws IOException {
         sendKeys(searchSkillsInput, skill);
     }
 
@@ -68,7 +71,7 @@ public class NaukriJobSearchPage extends BasePage {
         clickJavascript(selection);
     }
 
-    public void enterLocation(String location) {
+    public void enterLocation(String location) throws IOException {
         sendKeys(locationInput, location);
     }
 
@@ -169,10 +172,10 @@ public class NaukriJobSearchPage extends BasePage {
     public List<Map<String, String>> getTop10JobsAsData() {
         List<Map<String, String>> jobs = new ArrayList<>();
         try {
-            Thread.sleep(3000);
-            List<WebElement> jobElements = driver.findElements(jobListings);
-            int count = Math.min(10, jobElements.size());
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+            int count = Math.min(10, driver.findElements(jobListings).size());
             for (int i = 0; i < count; i++) {
+                List<WebElement> jobElements = driver.findElements(jobListings); // fresh each time
                 WebElement job = jobElements.get(i);
                 try {
                     Map<String, String> jobData = new HashMap<>();
@@ -216,29 +219,61 @@ public class NaukriJobSearchPage extends BasePage {
     }
 
     // Get jobs, store data, compare and return final data
+//    public List<Map<String, String>> getAndProcessJobData() {
+//        List<Map<String, String>> currentJobs = getTop10JobsAsData();
+//        if (currentJobs.isEmpty()) {
+//            System.out.println("No jobs found!");
+//            return currentJobs;
+//        }
+//        // Save current data
+//        DataStorageUtility.saveJobData(currentJobs);
+//        // Compare with previous data
+//        Map<String, Object> comparison = DataStorageUtility.compareJobData(currentJobs);
+//        // Print summary
+//        System.out.println(TableFormatterUtility.getSummaryStats(comparison));
+//        // Determine final data
+//        @SuppressWarnings("unchecked")
+//        List<Map<String, String>> newJobs = (List<Map<String, String>>) comparison.get("newJobs");
+//        if ((Boolean) comparison.get("isNewData") && !newJobs.isEmpty()) {
+//            System.out.println("\n✓ New data found! Using new jobs as final data.");
+//            return newJobs;
+//        } else {
+//            System.out.println("\n✓ No new data. Using all current jobs as final data.");
+//            return currentJobs;
+//        }
+//    }
+    // Get jobs, overwrite CSV, return new jobs or all current jobs
     public List<Map<String, String>> getAndProcessJobData() {
         List<Map<String, String>> currentJobs = getTop10JobsAsData();
+
+        // Guard: return early if empty
         if (currentJobs.isEmpty()) {
-            System.out.println("No jobs found!");
+            System.out.println("⚠ No jobs found!");
             return currentJobs;
         }
-        // Save current data
-        DataStorageUtility.saveJobData(currentJobs);
-        // Compare with previous data
+
+        // Compare BEFORE saving (so we compare against true previous data)
         Map<String, Object> comparison = DataStorageUtility.compareJobData(currentJobs);
+
+        // Overwrite CSV with latest data
+        DataStorageUtility.saveJobData(currentJobs);
+
         // Print summary
         System.out.println(TableFormatterUtility.getSummaryStats(comparison));
-        // Determine final data
+
         @SuppressWarnings("unchecked")
         List<Map<String, String>> newJobs = (List<Map<String, String>>) comparison.get("newJobs");
+
         if ((Boolean) comparison.get("isNewData") && !newJobs.isEmpty()) {
-            System.out.println("\n✓ New data found! Using new jobs as final data.");
+            System.out.println("✓ New jobs found: " + newJobs.size());
             return newJobs;
         } else {
-            System.out.println("\n✓ No new data. Using all current jobs as final data.");
+            System.out.println("✓ No new jobs. Returning all current jobs.");
             return currentJobs;
         }
     }
+
+
      //Get jobs, store data, compare and return bundled data
 //    public Map<String, Object> getAndProcessJobData() {
 //        List<Map<String, String>> currentJobs = getTop10JobsAsData();
@@ -278,28 +313,76 @@ public class NaukriJobSearchPage extends BasePage {
 //    }
 
     // Send final data via email
+//    public boolean sendFinalDataViaEmail(String recipientEmail) {
+//        try {
+//            List<Map<String, String>> finalData = getAndProcessJobData();
+//            Map<String, Object> comparison = DataStorageUtility.compareJobData(finalData);
+//            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//            String emailBody = EmailUtility.createEmailBody(comparison, timestamp);
+//            String subject = "Job Search Report - " +Property.Role+" - "+ timestamp;
+//            System.out.println("\nSending email to: " + recipientEmail);
+//            boolean emailSent = EmailUtility.sendJobDataEmail(recipientEmail, subject, emailBody);
+//            if (emailSent) {
+//                System.out.println("✓ Email sent successfully!");
+//            } else {
+//                System.out.println("✗ Failed to send email.");
+//            }
+//            return emailSent;
+//        } catch (Exception e) {
+//            System.out.println("Error sending email: " + e.getMessage());
+//            e.printStackTrace();
+//            return false;
+//        }
+//    }
+// Send final data via email — skips if empty or same as last run
     public boolean sendFinalDataViaEmail(String recipientEmail) {
         try {
-            List<Map<String, String>> finalData = getAndProcessJobData();
-            Map<String, Object> comparison = DataStorageUtility.compareJobData(finalData);
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            // Step 1: Get current jobs
+            List<Map<String, String>> currentJobs = getTop10JobsAsData();
+
+            // Step 2: Skip if empty
+            if (currentJobs.isEmpty()) {
+                System.out.println("⚠ No jobs found — skipping email.");
+                return false;
+            }
+
+            // Step 3: Compare with previous run BEFORE overwriting CSV
+            boolean sameAsLastRun = DataStorageUtility.isSameAsLastRun(currentJobs);
+
+            // Step 4: Overwrite CSV with latest data
+            DataStorageUtility.saveJobData(currentJobs);
+
+            // Step 5: Skip email if data hasn't changed
+            if (sameAsLastRun) {
+                System.out.println("⚠ Data is same as last run — skipping email.");
+                return false;
+            }
+
+            // Step 6: Get comparison details for email body
+            Map<String, Object> comparison = DataStorageUtility.compareJobData(currentJobs);
+
+            // Step 7: Build and send email
+            String timestamp = LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             String emailBody = EmailUtility.createEmailBody(comparison, timestamp);
-            String subject = "📧 Naukri Job Search Report - " + timestamp;
+            String subject   = "Job Search Report - " + Property.Role + " - " + timestamp;
+
             System.out.println("\nSending email to: " + recipientEmail);
             boolean emailSent = EmailUtility.sendJobDataEmail(recipientEmail, subject, emailBody);
+
             if (emailSent) {
                 System.out.println("✓ Email sent successfully!");
             } else {
                 System.out.println("✗ Failed to send email.");
             }
             return emailSent;
+
         } catch (Exception e) {
             System.out.println("Error sending email: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
-
     // Complete workflow: search, filter, process and send
     public void executeCompleteWorkflow(String skill, String experience, String location, String recipientEmail) {
         try {
