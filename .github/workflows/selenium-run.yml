@@ -28,8 +28,8 @@ jobs:
           mvn test \
             -DPlatform="LambdaTest" \
             -DBrowser="chrome" \
-            -DMail="lallubanala444@gmail.com" \
+            -DMail="qa-jobalerts-naukri@googlegroups.com" \
             -DRole="QA analyst" \
             -DExperince="5 years" \
             -DLocation="Hyderabad" \
-            -Dcucumber.filter.tags="@MailReportPropertyReader"
+            -Dcucumber.filter.tags="@MailReportPropertyReaderAPI"

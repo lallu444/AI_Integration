@@ -75,7 +75,8 @@ public class NaukriJobSearchSteps {
 
     @Given("navigate to naukri and search jobs from API")
     public void navigateToNaukriAndSearchJobsFromAPI() {
-        naukriApiPage.executeCompleteWorkflow(Property.Role, Property.Experince, Property.Location,Property.Mail);
+//        naukriApiPage.executeCompleteWorkflow(Property.Role, Property.Experince, Property.Location,Property.Mail);
+        naukriApiPage.executeCompleteWorkflowFixed(Property.Role, Property.Experince, Property.Location,Property.Mail);
     }
 
     @Then("print the properties to console")

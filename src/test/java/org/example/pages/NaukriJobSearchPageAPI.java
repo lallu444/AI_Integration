@@ -307,6 +307,67 @@ public class NaukriJobSearchPageAPI extends BasePage {
         }
     }
 
+    // ─── REPLACE executeCompleteWorkflow() in NaukriJobSearchPage.java ───────────
+
+    public void executeCompleteWorkflowFixed(String skill, String experience,
+                                        String location, String recipientEmail) {
+        try {
+            System.out.println("\n========== WORKFLOW STARTED ==========");
+            System.out.println("Skill: " + skill + " | Exp: " + experience
+                    + " | Location: " + location);
+
+            // STEP 1 — Fetch current jobs via Selenium
+            List<Map<String, String>> currentJobs = NaukriJSoup.fetchJobs(
+                    skill, experience, location, 10, 1);
+
+            // STEP 2 — Guard: empty check
+            if (currentJobs.isEmpty()) {
+                System.out.println("⚠ No jobs found — skipping everything.");
+                System.out.println("========== WORKFLOW ENDED ==========\n");
+                return;
+            }
+
+            // STEP 3 — Compare against PREVIOUS CSV (must be before saveJobData!)
+            //          This reads the OLD csv and finds what's new
+            Map<String, Object> comparison = DataStorageUtility_fixed.compareJobData(currentJobs);
+
+            // STEP 4 — Always overwrite CSV with current snapshot (AFTER comparing)
+            DataStorageUtility.saveJobData(currentJobs);
+
+            // STEP 5 — Print all current jobs to console
+            printJobsInTableFormat(currentJobs);
+
+            // STEP 6 — Guard: skip email if NO new jobs since last run
+            @SuppressWarnings("unchecked")
+            List<Map<String, String>> newJobs =
+                    (List<Map<String, String>>) comparison.get("newJobs");
+
+            if (newJobs == null || newJobs.isEmpty()) {
+                System.out.println("⚠ No new jobs since last run — skipping email.");
+                System.out.println("========== WORKFLOW ENDED ==========\n");
+                return;
+            }
+
+            // STEP 7 — Print summary stats
+            System.out.println(TableFormatterUtility.getSummaryStats(comparison));
+
+            // STEP 8 — Send email with NEW jobs only
+            String timestamp = LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            String subject   = "🆕 New Job Alert - " + Property.Role + " - " + timestamp;
+            String emailBody = EmailUtility.createEmailBody(comparison, timestamp);
+
+            System.out.println("\n📧 Sending email to: " + recipientEmail);
+            boolean sent = EmailUtility.sendJobDataEmail(recipientEmail, subject, emailBody);
+            System.out.println(sent ? "✓ Email sent!" : "✗ Email failed.");
+            System.out.println("========== WORKFLOW ENDED ==========\n");
+
+        } catch (Exception e) {
+            System.out.println("Error in workflow: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Legacy method kept for backward compatibility.
      * Now delegates to API-based path.
