@@ -368,6 +368,23 @@ public class NaukriJobSearchPageAPI extends BasePage {
         }
     }
 
+    // Existing — keep as-is for backward compatibility
+    public void executeCompleteWorkflowBCC(String skill, String experience, String location, String email) throws IOException {
+        executeCompleteWorkflowBCC(skill, experience, location, java.util.List.of(email));
+    }
+
+    // New — batch/group version
+    public void executeCompleteWorkflowBCC(String skill, String experience, String location, List<String> bccEmails) throws IOException {
+        navigateToNaukri();
+        searchSkills(skill);
+        filterByExperience(experience);
+        filterByLocation(location);
+        filterJobListings();
+
+        List<Map<String, String>> finalData = getAndProcessJobData();
+        printJobsInTableFormat(finalData);
+        sendFinalDataViaEmail(bccEmails); // see change #2 below
+    }
     /**
      * Legacy method kept for backward compatibility.
      * Now delegates to API-based path.
@@ -483,5 +500,18 @@ public class NaukriJobSearchPageAPI extends BasePage {
 
     private void clickJavascript(WebElement element) {
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+    }
+
+    public boolean sendFinalDataViaEmailBCC(String email) {
+        return sendFinalDataViaEmail(java.util.List.of(email));
+    }
+
+    public boolean sendFinalDataViaEmail(List<String> bccEmails) {
+        List<Map<String, String>> finalData = getAndProcessJobData();
+        Map<String, Object> comparison = /* whatever compareJobData() result you already store */;
+        String timestamp = java.time.LocalDateTime.now().toString();
+
+        String emailBody = new EmailUtility().createEmailBody(comparison, timestamp);
+        return new EmailUtility().sendJobDataEmailBCC(bccEmails, "Naukri Job Matches", emailBody);
     }
 }

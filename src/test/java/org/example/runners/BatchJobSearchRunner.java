@@ -13,6 +13,10 @@ import java.util.List;
 public class BatchJobSearchRunner {
 
     public static void main(String[] args) throws Exception {
+        DriverManager.initializeDriver("chrome");
+        NaukriJobSearchPage page = new NaukriJobSearchPage(DriverManager.getDriver());
+        page.executeCompleteWorkflow(group.getRole(), group.getExperience(), group.getLocation(), group.getMemberEmails());
+        DriverManager.quitDriver();
         String csvPath = System.getProperty("csv.path", "members.csv");
 
         List<Member> members = new CsvMemberReader().readMembers(csvPath);

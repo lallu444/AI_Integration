@@ -79,6 +79,8 @@ public class NaukriJobSearchSteps {
         naukriApiPage.executeCompleteWorkflowFixed(Property.Role, Property.Experince, Property.Location,Property.Mail);
     }
 
+
+
     @Then("print the properties to console")
     public void print_the_properties_to_console() {
         // Write code here that turns the phrase above into concrete actions

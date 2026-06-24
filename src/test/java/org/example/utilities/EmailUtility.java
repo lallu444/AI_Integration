@@ -222,5 +222,20 @@ public class EmailUtility {
 
         Transport.send(message);
     }
+    public boolean sendJobDataEmail(List<String> bccRecipients, String subject, String htmlContent) throws MessagingException {
+        Message message = new MimeMessage(session);
+        message.setFrom(new InternetAddress("noreply.automation.bot@gmail.com"));
+
+        // Neutral "To" so BCC'd members don't see each other
+        message.setRecipients(Message.RecipientType.TO,
+                InternetAddress.parse("noreply.automation.bot@gmail.com"));
+        message.setRecipients(Message.RecipientType.BCC,
+                InternetAddress.parse(String.join(",", bccRecipients)));
+
+        message.setSubject(subject);
+        message.setContent(htmlContent, "text/html");
+        Transport.send(message);
+        return true;
+    }
 
 }
