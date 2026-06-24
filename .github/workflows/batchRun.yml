@@ -1,0 +1,27 @@
+name: Naukri Batch Job Search
+
+on:
+  workflow_dispatch:
+    inputs:
+      csv_path:
+        description: 'Path to members CSV in repo'
+        required: true
+        default: 'data/members.csv'
+
+jobs:
+  batch-search:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Run batch job search
+        run: mvn -P batch-mode exec:java -Dcsv.path=${{ github.event.inputs.csv_path }}
+        env:
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}

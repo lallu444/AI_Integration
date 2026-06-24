@@ -208,5 +208,19 @@ public class EmailUtility {
 
         return html.toString();
     }
+    public void sendMail(List<String> bccRecipients, String role, String location, List<Job> jobs) throws MessagingException {
+        Message message = new MimeMessage(session);
+        message.setFrom(new InternetAddress(fromAddress));
+
+        // Use a neutral "To" — your own sender/no-reply, not a real member
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(fromAddress));
+        message.setRecipients(Message.RecipientType.BCC,
+                InternetAddress.parse(String.join(",", bccRecipients)));
+
+        message.setSubject("Top Job Matches: " + role + " - " + location);
+        message.setText(buildEmailBody(jobs));
+
+        Transport.send(message);
+    }
 
 }
