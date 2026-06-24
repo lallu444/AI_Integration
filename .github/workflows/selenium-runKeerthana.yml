@@ -1,4 +1,4 @@
-name: LambdaTest Selenium Runner - Workflow B
+name: MIS Analyst workflow
 
 on:
   schedule:
