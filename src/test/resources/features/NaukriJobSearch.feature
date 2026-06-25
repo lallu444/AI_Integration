@@ -22,6 +22,10 @@
   Scenario: send Mail report of the latest jobs
     Given navigate to naukri and search jobs from API
 
+  @MailReportPropertyReaderAPI_BCC
+  Scenario: send Mail report of the latest jobs
+    Given navigate to naukri and search jobs from API and send BCC
+
   @PropertyReader
   Scenario: Read properties from config file
     Given read "Platform" from config file

@@ -7,6 +7,7 @@ import io.cucumber.java.en.Then;
 import org.example.drivers.DriverManager;
 import org.example.pages.NaukriJobSearchPage;
 import org.example.pages.NaukriJobSearchPageAPI;
+import org.example.pages.NaukriJobSearchPageAPIBatch;
 import org.openqa.selenium.WebDriver;
 
 import java.io.IOException;
@@ -14,18 +15,18 @@ import java.util.ArrayList;
 import java.util.List;
 import org.example.utilities.Property;
 
-public class NaukriJobSearchSteps {
+public class NaukriJobSearchStepsBatch {
     private WebDriver driver;
     private NaukriJobSearchPage naukriPage;
-    private NaukriJobSearchPageAPI naukriApiPage;
+    private NaukriJobSearchPageAPIBatch naukriApiPage;
 
-    public NaukriJobSearchSteps() {
+    public NaukriJobSearchStepsBatch() {
         this.driver = DriverManager.getDriver();
         Property property = new Property();
         this.naukriPage = new NaukriJobSearchPage(driver);
-        this.naukriApiPage = new NaukriJobSearchPageAPI(driver);
+        this.naukriApiPage = new NaukriJobSearchPageAPIBatch(driver);
     }
-    @Given("User navigates to Naukri website")
+    /*@Given("User navigates to Naukri website")
     public void userNavigatesToNaukriWebsite() {
         driver = DriverManager.getDriver();
         naukriPage = new NaukriJobSearchPage(driver);
@@ -85,7 +86,7 @@ public class NaukriJobSearchSteps {
     @Then("print the properties to console")
     public void print_the_properties_to_console() {
         // Write code here that turns the phrase above into concrete actions
-        throw new io.cucumber.java.PendingException();
+        throw new PendingException();
     }
 
     @Given("read {string} from config file")
@@ -101,5 +102,11 @@ public class NaukriJobSearchSteps {
     @And("login to site using {string} and {string}")
     public void loginToSite(String UserName,String Password) {
         naukriPage.loginToSite(UserName,Password);
+    }*/
+
+    @Given("navigate to naukri and search jobs from API and send BCC")
+    public void navigateToNaukriAndSearchJobsFromAPIAndSendBCC() {
+        naukriApiPage.executeCompleteWorkflowBCC();
     }
+
 }
