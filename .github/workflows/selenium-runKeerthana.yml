@@ -26,7 +26,7 @@ jobs:
           LT_ACCESS_KEY: ${{ secrets.LT_ACCESS_KEY }}
         run: |
           mvn test \
-            -DPlatform="LambdaTest" \
+            -DPlatform="Desktop" \
             -DBrowser="chrome" \
             -DMail="careercart-mis-analyst@googlegroups.com" \
             -DRole="MIS analyst" \
